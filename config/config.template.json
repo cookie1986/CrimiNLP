@@ -1,0 +1,5 @@
+{
+  "input_data": "${INPUT_DATA_PATH}",
+  "results": "${RESULTS_PATH}"
+}
+  

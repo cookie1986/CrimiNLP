@@ -1,5 +1,16 @@
-crime_data.csv
+# older files
 notes.md
-/venv
 vic_offender_remapping.csv
 merseyside_data_remapping.csv
+vict-off-remap-kappa.xlsx
+v2_vic_offender_remapping.csv
+
+# config files
+config/.env
+config/config.json
+
+# data files
+data/
+
+# setup files
+/venv
