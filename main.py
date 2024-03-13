@@ -11,7 +11,13 @@ def main(update=False):
             './config/config.template.json'
             )
     else:
-        load_config()
+        config = load_config()
+    
+    # read data
+    input_data_path = config.get('input_data','')
+    if not input_data_path:
+        print("Input data path not configured.")
+    data = load_data(input_data_path)
 
         
 
