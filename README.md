@@ -1,6 +1,6 @@
-# Missing Data Predictor
+# CrimiNLP
 ## Overview
-The purpose of this project is to compare text mining and machine learning methods for populating missing data in a structured dataset, based on the information contained within a column comprising unstructured data.
+The purpose of this software is to use techniques from text mining, natural language processing (NLP), and machine learning to assist crime analytics.
 
 ## Prerequisites
 - `.env` file with locations to store data (see template/env_template.txt for an example)

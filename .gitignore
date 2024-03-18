@@ -17,3 +17,7 @@ data/
 
 # hidden files
 .DS_Store
+
+# other files
+/archive/
+/notebooks/
