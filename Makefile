@@ -13,8 +13,10 @@ venv/bin/activate: requirements.txt
 venv: venv/bin/activate
 	. ./venv/bin/activate
 
+RUN_ARGS = 
+
 run: venv
-	$(PYTHON) main.py
+	$(PYTHON) main.py ${RUN_ARGS}
 
 clean: 
 	rm -rf __pycache__

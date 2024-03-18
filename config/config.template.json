@@ -1,5 +1,6 @@
 {
   "input_data": "${INPUT_DATA_PATH}",
-  "results": "${RESULTS_PATH}"
+  "results": "${RESULTS_PATH}",
+  "label_remappings": "${LABEL_REMAPPINGS_PATH}"
 }
   

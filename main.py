@@ -1,19 +1,20 @@
 import argparse
-from src.read_data import load_data
-from src.preprocessing import preprocess_data
-from src.feature_engineering import create_feature_vector
-from src.train_evaluate import train_and_evaluate
 from src.config import update_config, load_config
+from src.read_data import load_data
+from src.preprocessing import target_mapping
+# from src.feature_engineering import create_feature_vector
+# from src.train_evaluate import train_and_evaluate
+
 
 def main(update=False):
     if update:
         update_config(
             './config/config.template.json'
             )
-    else:
-        config = load_config()
+    # load config variables
+    config = load_config()
     
-    # read data
+    # Read data
     input_data_path = config.get('input_data','')
     if not input_data_path:
         print("Input data path not configured.")
