@@ -6,17 +6,18 @@ def apply_value_mapping(
         mapping_dir: str
         ):
     """
-    Replaces values in pd.Series with corresponding values in a mapping object (currently a DataFrame).
+    Replaces values in pd.Series with corresponding values from a CSV file mapping.
 
     Parameters:
     - values (pd.Series): The Series containing the values to be transformed.
-    - mapping (pd.DataFrame): The 2-column DataFrame containing the (i) original values, and (ii) the remapped values.
+    - mapping_dir (str): The file path to the CSV file containing the mapping. The CSV should have two columns:
+                         one for original values and one for the remapped values.
 
     Returns:
     - pd.Series: A Series containing remapped values.
 
     Raises:
-    - FileNotFounderror: If 'values' is not provided, or if no mapping object is found at the stated mapping_dir directory.
+    - FileNotFoundError: If the CSV file cannot be found at the provided mapping_dir directory.
     """
     # Load remapping CSV file
     mapping_df = pd.read_csv(mapping_dir, delimiter=',')
