@@ -20,6 +20,15 @@ def main(update=False):
         print("Input data path not configured.")
     data = load_data(input_data_path)
 
+    # Map target values
+    target_remappings_path = config.get('label_remappings')
+    target_name = input("Name of target label: ")
+    target = target_mapping(
+        dataframe=data, 
+        target_name = target_name,
+        remap_target=True,
+        remap_file_dir=target_remappings_path
+        )
         
 
 if __name__ == "__main__":

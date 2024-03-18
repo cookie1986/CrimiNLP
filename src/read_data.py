@@ -9,15 +9,15 @@ def load_data(directory_path: str) -> pd.DataFrame:
     Loads data from a CSV file into a Pandas DataFrame.
 
     Parameters:
-    - directory_path: str, path to the directory containing CSV files to be loaded
+    - directory_path (str): The path to the directory containing CSV files to be loaded.
 
     Returns:
-    - pd.DataFrame containing the data from the CSV file.
+    - pd.DataFrame: The DataFrame containing the data from the CSV file.
 
     Raises:
-    - FileNotFoundError if no file exists
-    - pd.errors.EmptyDataError if the file is empty
-    - pd.errors.ParserError if there is an issue with the file
+    - FileNotFoundError: If no file exists.
+    - pd.errors.EmptyDataError: If the file is empty.
+    - pd.errors.ParserError: If there is an issue with the file.
     """
 
     files = glob.glob(f"{directory_path}/*.csv")
