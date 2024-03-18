@@ -1,4 +1,6 @@
 # CrimiNLP
+![Logo](resources/CrimiNLP_banner.png)
+
 ## Overview
 The purpose of this software is to use techniques from text mining, natural language processing (NLP), and machine learning to assist crime analytics.
 
