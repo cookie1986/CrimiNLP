@@ -27,7 +27,8 @@ def main(update=False):
         dataframe=data, 
         target_name = target_name,
         remap_target=True,
-        remap_file_dir=target_remappings_path
+        remap_file_dir=target_remappings_path,
+        ignored_values = ['Other']
         )
         
 
