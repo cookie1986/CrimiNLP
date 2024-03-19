@@ -21,3 +21,6 @@ data/
 # other files
 /archive/
 /notebooks/
+
+# log files
+app.log

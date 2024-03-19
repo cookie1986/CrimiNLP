@@ -1,6 +1,12 @@
 import json
 import os
+import logging
+import warnings
 from dotenv import load_dotenv
+
+# Config logging 
+logging.basicConfig(level=logging.INFO, filename='app.log', filemode='a',
+                    format='%(name)s - %(levelname)s - %(message)s')
 
 # load environment variables from .env
 load_dotenv('./config/.env')
@@ -23,11 +29,23 @@ def update_config(template_path):
     # specify the path for the updated configuration
     updated_path_config = './config/config.json'
 
+    # check if an existing config.json file exists and remove if so before creating a new one.
+    if os.path.exists(updated_path_config):
+        try:
+            os.remove(updated_path_config)
+            logging.info("Existing config.json file deleted.")
+        except OSError as e:
+            warnings.warn(f"Failed to delete existing config.json file: {e.strerror}. Check environment vars are correct.")
+
     # save the updated configuration
-    with open(updated_path_config, 'w') as file:
-        json.dump(updated_config, file, indent=4)
-    
-    print(f'Configuration updated and saved to {updated_path_config}')
+    try:
+        with open(updated_path_config, 'w') as file:
+            json.dump(updated_config, file, indent=4)
+        logging.info(f'Configuration updated and saved to {updated_path_config}')
+    except Exception as e:
+        error_message = f"Error saving to config.json: {e}"
+        logging.error(error_message)
+        raise
 
 
 def load_config(config_path='./config/config.json'):
