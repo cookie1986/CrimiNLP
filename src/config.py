@@ -48,8 +48,20 @@ def update_config(template_path):
         raise
 
 
+class ConfigObject:
+    def __init__(self, dictionary):
+        for key, value in dictionary.items():
+            if isinstance(value, dict):
+                value = ConfigObject(value)
+            self.__dict__[key] = value
+
+_config_instance = None
+
 def load_config(config_path='./config/config.json'):
     """load the configuration file"""
-    with open(config_path, 'r') as file:
-        config = json.load(file)
-    return config
+    global _config_instance
+    if _config_instance is None:
+        with open(config_path, 'r') as file:
+            config_dict = json.load(file)
+        _config_instance = ConfigObject(config_dict)
+    return _config_instance
