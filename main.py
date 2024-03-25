@@ -1,7 +1,9 @@
 import argparse
 from src.config import update_config, load_config
 from src.read_data import load_data
-from src.preprocessing import target_mapping
+from src.preprocessing import data_preprocessing
+from src.target_formatting import target_mapping
+from src.text_preprocessing import text_cleaning
 # from src.feature_engineering import create_feature_vector
 # from src.train_evaluate import train_and_evaluate
 
@@ -11,24 +13,35 @@ def main(update=False):
         update_config(
             './config/config.template.json'
             )
-    # load config variables
+    # Load config variables as dot notation
     config = load_config()
     
-    # Read data
-    input_data_path = config.get('input_data','')
+    # Read data from CSV file
+    input_data_path = config.input_data
     if not input_data_path:
         print("Input data path not configured.")
     data = load_data(input_data_path)
 
+    # Preprocessing
+    data = data_preprocessing(
+        data=data,
+        features_name=config.features_name,
+        save_duplicates = True,
+        remove_outliers = True
+        )
+
     # Map target values
-    target_remappings_path = config.get('label_remappings')
-    target_name = input("Name of target label: ")
     target = target_mapping(
         dataframe=data, 
-        target_name = target_name,
+        target_name = config.target_name,
         remap_target=True,
-        remap_file_dir=target_remappings_path,
         ignored_values = ['Other']
+        )
+    
+    # Clean text features
+    text = text_cleaning(
+        data = data[config.features_name],
+        id_values = target.index
         )
         
 

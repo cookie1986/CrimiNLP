@@ -3,39 +3,38 @@ from typing import List
 import logging
 import os
 from src.validators import check_type, data_integrity_check
+from src.config import load_config
 
 # Config logging
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Load configuration
+config = load_config()
 
-def apply_value_mapping(
-        values: pd.Series,
-        mapping_dir: str
-        ):
+
+def apply_value_mapping(values: pd.Series)-> pd.Series:
     """
     Replaces values in pd.Series with corresponding values from a CSV file mapping.
 
     Parameters:
     - values (pd.Series): The Series containing the values to be transformed.
-    - mapping_dir (str): The file path to the CSV file containing the mapping. The CSV should have two columns:
-                         one for original values and one for the remapped values.
 
     Returns:
     - pd.Series: A Series containing remapped values.
 
     Raises:
-    - FileNotFoundError: If the CSV file cannot be found at the provided mapping_dir directory.
+    - FileNotFoundError: If the CSV file cannot be found at the provided directory.
     """
 
     # Check the path to mapping file exists
-    if not os.path.exists(mapping_dir):
-        error_message = f"The CSV file cannot be found at the provided directory: {mapping_dir}"
+    if not os.path.exists(config.label_remappings):
+        error_message = f"The CSV file cannot be found at the provided directory: {config.label_remappings}"
         logging.error(error_message)
         raise FileNotFoundError(error_message)
 
     # Load remapping CSV file
     try:
-        mapping_df = pd.read_csv(mapping_dir, delimiter=',')
+        mapping_df = pd.read_csv(config.label_remappings, delimiter=',')
         mapping_df.columns = mapping_df.columns.str.strip()
     except Exception as e:
         logging.error(f"Error loading CSV file: {e}")
@@ -55,8 +54,7 @@ def target_mapping(
         dataframe: pd.DataFrame,
         target_name: str,
         ignored_values: List = None,
-        remap_target: bool = False,
-        remap_file_dir: str = None,
+        remap_target: bool = False
         ) -> pd.Series:
     """
     Extracts a target variable from available columns in a supplied DataFrame and optionally remaps its values.
@@ -66,9 +64,7 @@ def target_mapping(
                                 ML task.
     - target_name (str): The name of the target variable.
     - ignored_values (List, optional): A list of values to be ignored/removed within the target variable.
-    - remap_target (bool, optional): If True, remaps values in the target column based on `remap_file_dir`. 
-                                    Default is False.
-    - remap_file_dir (str): Directory to the file containing remappings. Required if `remap_target` is True.
+    - remap_target (bool, optional): If True, remaps values in the target column. Default is False.
 
     Returns:
     - pd.Series: A Series containing the processed target variable.
@@ -76,7 +72,7 @@ def target_mapping(
     Raises:
     - KeyError: If `target_name` is not found in the DataFrame's columns.
     - TypeError: If incorrect types are provided for the `dataframe`, `target_name`, or `remap_target` parameters.
-    - ValueError: If `target_name` is invalid, if `remap_file_dir` is required but not provided, or if the target 
+    - ValueError: If `target_name` is invalid, if remapping directory is required but not provided, or if the target 
                 column is empty after NaNs are removed.
     - DataIntegrityError: If the remapping process invalidates the dataset for supervised learning.
     """
@@ -93,8 +89,8 @@ def target_mapping(
         raise KeyError(error_message)
     
     # ValueError checks
-    if remap_target and remap_file_dir is None:
-        error_message = "remap_target set to True, but remap_file_dir is blank."
+    if remap_target and config.label_remappings is None:
+        error_message = "remap_target set to True, but remap directory is blank."
         logging.error(error_message)
         raise ValueError(error_message)
     if target_name.strip() == "":
@@ -113,11 +109,7 @@ def target_mapping(
 
     # Remap column values if remapping = True
     if remap_target == True:
-
-        target = apply_value_mapping(
-            values=target,
-            mapping_dir=remap_file_dir
-            )
+        target = apply_value_mapping(values=target)
         
     # Remove whitespaces and convert to lower-case
     target = target.str.strip().str.lower()

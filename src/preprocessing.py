@@ -1,132 +1,113 @@
 import pandas as pd
-from typing import List
 import logging
-import os
-from src.validators import check_type, data_integrity_check
+import datetime
+from src.config import load_config
 
 # Config logging
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Load configuration
+config = load_config()
 
-def apply_value_mapping(
-        values: pd.Series,
-        mapping_dir: str
-        ):
+
+def delete_outliers(
+        data: pd.DataFrame,
+        features_name: 'str'
+        ) -> pd.DataFrame:
     """
-    Replaces values in pd.Series with corresponding values from a CSV file mapping.
+    Remove outlying data-points based on the number of characters in the features string. Rows where
+    the length of the feature string exceeds three standard deviations are removed.
 
     Parameters:
-    - values (pd.Series): The Series containing the values to be transformed.
-    - mapping_dir (str): The file path to the CSV file containing the mapping. The CSV should have two columns:
-                         one for original values and one for the remapped values.
+    - data (pd.DataFrame): A pandas DataFrame with strings as values.
+    - features_name (str): The name of the column to check for outliers.
 
     Returns:
-    - pd.Series: A Series containing remapped values.
-
-    Raises:
-    - FileNotFoundError: If the CSV file cannot be found at the provided mapping_dir directory.
+    - data (pd.DataFrame): A pandas DataFrame with outliers removed.
     """
 
-    # Check the path to mapping file exists
-    if not os.path.exists(mapping_dir):
-        error_message = f"The CSV file cannot be found at the provided directory: {mapping_dir}"
-        logging.error(error_message)
-        raise FileNotFoundError(error_message)
+    # Calculate upper/lower bounds
+    mean_length = data[features_name].str.len().mean()
+    std_dev_length = data[features_name].str.len().std()
+    lower_bound = mean_length - 3 * std_dev_length
+    upper_bound = mean_length + 3 * std_dev_length
 
-    # Load remapping CSV file
-    try:
-        mapping_df = pd.read_csv(mapping_dir, delimiter=',')
-        mapping_df.columns = mapping_df.columns.str.strip()
-    except Exception as e:
-        logging.error(f"Error loading CSV file: {e}")
-        raise
+    # Filter the data
+    data_f = data[data[features_name].str.len().between(lower_bound, upper_bound)]
     
-    # Replace values in target_name column with corresponding values in remapping file
-    try:
-        mapping_dict = mapping_df.set_index('value')['mapping'].to_dict() # Convert mapping CSV file (as DataFrame) to dict
-        target_remapped = values.map(mapping_dict) # Perform the remapping
-    except Exception as e:
-        logging.error(f"Error during the mapping process: {e}")
-        raise
-    return target_remapped
+    # Store the outliers
+    outliers = data[~data[features_name].str.len().between(lower_bound, upper_bound)]
+    outliers.to_csv(f"{config.outliers}/{datetime.date.today()}_outliers.csv", index=False)
+
+    logging.info(f"{len(outliers)} rows were removed due to length exceeding 3 standard deviations.")
+
+    return data_f
 
 
-def target_mapping(
-        dataframe: pd.DataFrame,
-        target_name: str,
-        ignored_values: List = None,
-        remap_target: bool = False,
-        remap_file_dir: str = None,
-        ) -> pd.Series:
+def data_preprocessing(
+        data: pd.DataFrame,
+        features_name: str,
+        save_duplicates: bool = True,
+        remove_outliers: bool = True
+        ) -> pd.DataFrame:
     """
-    Extracts a target variable from available columns in a supplied DataFrame and optionally remaps its values.
+    Performs basic filtering steps on the feature column including removing NaNs, handling duplicate
+    rows, and potential outliers.
 
     Parameters:
-    - dataframe (pd.DataFrame): The DataFrame containing columns intended to act as the target in a supervised 
-                                ML task.
-    - target_name (str): The name of the target variable.
-    - ignored_values (List, optional): A list of values to be ignored/removed within the target variable.
-    - remap_target (bool, optional): If True, remaps values in the target column based on `remap_file_dir`. 
-                                    Default is False.
-    - remap_file_dir (str): Directory to the file containing remappings. Required if `remap_target` is True.
+    - data (pd.DataFrame): A pandas DataFrame with a nominated target and features column.
+    - features_name (str): The name of the features variable (must be a column in 'data').
+    - save_duplicates (bool): A boolean determining if duplicate records are kept for auditing.
+    - remove_outliers (bool): A boolean that determines the treatment of outliers (default (True) is to remove).
 
     Returns:
-    - pd.Series: A Series containing the processed target variable.
+    - data (pd.DataFrame): A filtered pandas DataFrame.
 
     Raises:
-    - KeyError: If `target_name` is not found in the DataFrame's columns.
-    - TypeError: If incorrect types are provided for the `dataframe`, `target_name`, or `remap_target` parameters.
-    - ValueError: If `target_name` is invalid, if `remap_file_dir` is required but not provided, or if the target 
-                column is empty after NaNs are removed.
-    - DataIntegrityError: If the remapping process invalidates the dataset for supervised learning.
+    - TypeError: If data is not of type pd.DataFrame, features_name is not of type str, and save_duplicates and 
+                 remove_outliers are not of type bool.
+    - ValueError: If DataFrame is empty after removing NaNs.
+    - FileNotFoundError: If unable to save duplicates to specified directory.
     """
 
-    # TypeError checks
-    check_type(dataframe, pd.DataFrame, 'dataframe')
-    check_type(target_name, str, 'target_name')
-    check_type(remap_target, bool, 'remap_target')
+    # Type checks
+    if not isinstance(data, pd.DataFrame):
+        raise TypeError("data must be a pandas DataFrame.")
+    if not isinstance(features_name, str):
+        raise TypeError("features_name must be a string.")
+    if not isinstance(save_duplicates, bool) or not isinstance(remove_outliers, bool):
+        raise TypeError("save_duplicates and remove_outliers must be boolean values.")
     
-    # KeyError check
-    if target_name not in dataframe.columns:
-        error_message = f"{target_name} not found in DataFrame columns."
-        logging.error(error_message)
-        raise KeyError(error_message)
-    
-    # ValueError checks
-    if remap_target and remap_file_dir is None:
-        error_message = "remap_target set to True, but remap_file_dir is blank."
-        logging.error(error_message)
-        raise ValueError(error_message)
-    if target_name.strip() == "":
-        error_message = "target_name cannot be empty or whitespace."
+    # Remove NaNs from features column
+    data = data.dropna(subset=[features_name])
+
+    if data.empty:
+        error_message = "DataFrame is empty after removing NaNs. Check your data or processing steps."
         logging.error(error_message)
         raise ValueError(error_message)
 
-    # Filter DataFrame on target_name and drop NaNs
-    target = dataframe[target_name].dropna()
-
-    # Check if target is empty after removing NaNs.
-    if target.empty:
-        error_message = f'{target_name} is empty after removing NaNs.'
-        logging.error(error_message)
-        raise ValueError
-
-    # Remap column values if remapping = True
-    if remap_target == True:
-
-        target = apply_value_mapping(
-            values=target,
-            mapping_dir=remap_file_dir
-            )
-        
-    # Remove whitespaces and convert to lower-case
-    target = target.str.strip().str.lower()
+    # Check for duplicate values in the features column -- first instances are kept.
+    data_dupes_index = data.duplicated(subset=features_name, keep='first')
     
-    # Remove values appearing in the ignored_values list
-    if isinstance(ignored_values, List):
-        target = target[~target.isin([x.strip().lower() for x in ignored_values])]
-    
-    # Data integrity checks
-    data_integrity_check(target)
+    # Gather info on the duplicates removed.
+    data_dupes_sum = data_dupes_index.sum()
+    logging.info(f'{data_dupes_sum} duplicate records have been removed.')
 
-    return target
+    # Filter the dataset
+    data_f = data[~data_dupes_index]
+
+    # If True, store the duplicate values (along with first occurence) for auditing.
+    if save_duplicates:
+        data_dupes_index_with_first = data.duplicated(subset=features_name, keep=False)
+        duplicates = data[data_dupes_index_with_first]
+        try:
+            duplicates.to_csv(f"{config.duplicate_data}/{datetime.date.today()}_duplicates.csv", index=False)
+        except Exception as e:
+            logging.error(f"Failed to save duplicates. Error: {str(e)}")
+            raise FileNotFoundError("Could not save duplicates to file. Check the directory exists and is writable.")
+    
+    # Check for potential outliers and remove.
+    if remove_outliers:
+        data_f = delete_outliers(data_f,features_name)
+
+    return data_f

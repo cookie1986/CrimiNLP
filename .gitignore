@@ -11,6 +11,7 @@ config/config.json
 
 # data files
 data/
+data_audit/
 
 # setup files
 /venv
