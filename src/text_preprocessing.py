@@ -1,14 +1,21 @@
 import pandas as pd
 import re
 from nltk.stem.porter import PorterStemmer
+from nltk.corpus import stopwords
 import logging
 from src.text_utils import ensure_nltk_resources
+
 
 # Config logging
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Check stopwords are available
 ensure_nltk_resources()
+stop_words = set(stopwords.words('english'))
+
+# Init stemmer
+stemmer = PorterStemmer()
+
 
 def basic_cleaning(
         data: pd.Series
@@ -37,17 +44,14 @@ def text_cleaning(
         id_values = None
         ) -> pd.Series:
     """
-    Cleans text in a pandas Series.
+    Cleans text in a pandas Series. Removes stopwords and stems the remaining tokens.
 
     Parameters:
     - data (pd.Series): A pandas Series containing text values.
     - id_values: Index values corresponding to the rows to be processed (non-indexed values are removed).
 
     Returns:
-    - cleaned_data (pd.Series): A pandas Series containing cleaned text values
-
-    Raises:
-    - KeyError if id_values are not present in data index.
+    - data (pd.Series): A pandas Series containing cleaned text values
     """
     
     # Filter data with the indices present in id_values.
@@ -57,4 +61,10 @@ def text_cleaning(
     # Basic cleaning steps
     data = basic_cleaning(data=data)
 
-    return None
+    # Remove stopwords
+    data = data.apply(lambda x: ' '.join(word for word in x.split() if word not in stop_words))
+
+    # Stem remaining tokens
+    data = data.apply(lambda x: ' '.join(stemmer.stem(word) for word in x.split()))
+
+    return data
