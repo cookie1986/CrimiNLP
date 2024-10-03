@@ -1,0 +1,27 @@
+# older files
+notes.md
+vic_offender_remapping.csv
+merseyside_data_remapping.csv
+vict-off-remap-kappa.xlsx
+v2_vic_offender_remapping.csv
+
+# config files
+config/.env
+config/config.json
+
+# data files
+data/
+data_audit/
+
+# setup files
+/venv
+
+# hidden files
+.DS_Store
+
+# other files
+/archive/
+/notebooks/
+
+# log files
+app.log

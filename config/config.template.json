@@ -1,0 +1,11 @@
+{
+  "input_data": "${INPUT_DATA_PATH}",
+  "results": "${RESULTS_PATH}",
+  "label_remappings": "${LABEL_REMAPPINGS_PATH}",
+  "duplicate_data": "${DUPLICATE_DATA_PATH}",
+  "duplicate_metadata": "${DUPLICATE_METADATA_PATH}",
+  "outliers":"${OUTLIERS_PATH}",
+  "target_name":"${TARGET_NAME}",
+  "features_name":"${FEATURES_NAME}"
+}
+  

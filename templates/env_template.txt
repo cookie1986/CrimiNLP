@@ -1,0 +1,4 @@
+# Note: save file as .env with local values
+
+PATH_TO_DATA = specify/the/location/where/data/is/stored
+PATH_TO_RESULTS = specify/where/results/are/to/be/stored
